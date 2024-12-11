@@ -1,0 +1,141 @@
+Lexer test:
+1. Use Flex to generate the lexer code:
+* This creates the lexer.c file, which contains the C implementation of your lexical analyzer.
+
+flex -o lexer.c lexer.l
+
+2. Compile the generated lexer.c:
+* The -lfl flag links the Flex library.
+
+gcc -o lexer lexer.c -lfl
+
+2.5 Check for hidden characters using:
+cat -A input.txt
+Ensure Unix-style line endings:
+dos2unix input.txt
+
+
+3. 
+* Run the lexer program and provide input.txt as input:
+./lexer input.txt
+
+
+
+Compile: 
+1. Use flex to generate the lexical analyzer code from lexer.l:
+* This will produce a file named lex.yy.c.
+
+flex lexer.l
+
+2. Use bison to generate the parser code from parser.y:
+* This will produce two files:
+parser.tab.c: The parser implementation.
+parser.tab.h: The parser header file.
+
+bison -d parser.y
+
+3. Compile the generated files along with any supporting code into an executable. Use a C compiler like gcc:
+gcc -o compiler lex.yy.c parser.tab.c -lfl
+
+4. Run the compiled program with your input file:
+./compiler input.txt
+
+
+Perser:
+
+1. Generate the lexer and parser files:
+bison -d parser.y
+flex lexer.l
+gcc parser.tab.c lex.yy.c -o parser -lfl
+
+2. Run the parser with the input file:
+./parser < input.txt
+
+
+
+lexer.l
+
+%{
+#include <stdio.h>
+#include <stdlib.h>
+
+// Token definitions
+enum TokenType {
+    TOK_PLUS, TOK_MINUS, TOK_MUL, TOK_DIV, TOK_DOUBLE,
+    TOK_IF, TOK_ELSE, TOK_FOR, TOK_PRINT,
+    TOK_IDENTIFIER, TOK_NUMBER,
+    TOK_LPAREN, TOK_RPAREN, TOK_LBRACE, TOK_RBRACE, TOK_SEMICOLON,
+    TOK_ASSIGN, TOK_UNKNOWN
+};
+
+// Required by Flex to avoid undefined reference to yywrap
+int yywrap(void) {
+    return 1;
+}
+
+// Function to print tokens
+void print_token(int token, const char* lexeme) {
+    switch (token) {
+        case TOK_PLUS: printf("PLUS: %s\n", lexeme); break;
+        case TOK_MINUS: printf("MINUS: %s\n", lexeme); break;
+        case TOK_MUL: printf("MULTIPLY: %s\n", lexeme); break;
+        case TOK_DIV: printf("DIVIDE: %s\n", lexeme); break;
+        case TOK_DOUBLE: printf("DOUBLE: %s\n", lexeme); break;
+        case TOK_IF: printf("IF: %s\n", lexeme); break;
+        case TOK_ELSE: printf("ELSE: %s\n", lexeme); break;
+        case TOK_FOR: printf("FOR: %s\n", lexeme); break;
+        case TOK_PRINT: printf("PRINT: %s\n", lexeme); break;
+        case TOK_IDENTIFIER: printf("IDENTIFIER: %s\n", lexeme); break;
+        case TOK_NUMBER: printf("NUMBER: %s\n", lexeme); break;
+        case TOK_LPAREN: printf("LEFT PAREN: %s\n", lexeme); break;
+        case TOK_RPAREN: printf("RIGHT PAREN: %s\n", lexeme); break;
+        case TOK_LBRACE: printf("LEFT BRACE: %s\n", lexeme); break;
+        case TOK_RBRACE: printf("RIGHT BRACE: %s\n", lexeme); break;
+        case TOK_SEMICOLON: printf("SEMICOLON: %s\n", lexeme); break;
+        case TOK_ASSIGN: printf("ASSIGN: %s\n", lexeme); break;
+        default: printf("UNKNOWN: %s\n", lexeme); break;
+    }
+}
+%}
+
+%%
+"+"         { print_token(TOK_PLUS, yytext); }
+"-"         { print_token(TOK_MINUS, yytext); }
+"*"         { print_token(TOK_MUL, yytext); }
+"/"         { print_token(TOK_DIV, yytext); }
+"double"    { print_token(TOK_DOUBLE, yytext); }
+"if"        { print_token(TOK_IF, yytext); }
+"else"      { print_token(TOK_ELSE, yytext); }
+"for"       { print_token(TOK_FOR, yytext); }
+"print"     { print_token(TOK_PRINT, yytext); }
+[a-zA-Z_][a-zA-Z0-9_]* { print_token(TOK_IDENTIFIER, yytext); }
+[0-9]+(\.[0-9]+)? { print_token(TOK_NUMBER, yytext); }
+"("         { print_token(TOK_LPAREN, yytext); }
+")"         { print_token(TOK_RPAREN, yytext); }
+"{"         { print_token(TOK_LBRACE, yytext); }
+"}"         { print_token(TOK_RBRACE, yytext); }
+";"         { print_token(TOK_SEMICOLON, yytext); }
+"="         { print_token(TOK_ASSIGN, yytext); }
+[ \t\n]+    ; // Ignore whitespace
+.           { print_token(TOK_UNKNOWN, yytext); }
+%%
+
+int main(int argc, char** argv) {
+    if (argc != 2) {
+        fprintf(stderr, "Usage: %s <input file>\n", argv[0]);
+        return 1;
+    }
+
+    FILE* file = fopen(argv[1], "r");
+    if (!file) {
+        perror("Error opening file");
+        return 1;
+    }
+
+    yyin = file;  // Set the input for Flex
+    yylex();      // Start lexical analysis
+    fclose(file);
+    return 0;
+}
+
+
