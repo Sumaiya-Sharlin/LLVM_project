@@ -1,11 +1,19 @@
-double x = 10.5;
-double y = x * 2.0 - 3.0;
-if (y > 0) {
-    y = y / 2.0;
-} else {
-    y = 0.0;
+double x = 13.5;
+double y = x - ((5 * 9) / 2);
+if (y > 10) {
+    y = y / 3.0;
+} 
+else {
+    y = y / 2;
 }
-for (x = 0.0; x < 10.0; x = x + 1.0) {
-    y = y + x;
+double z = 0.0;
+while(z < 10.0){
+    y = y + z;
+    z = z + 1.0;
 }
+for(z = 0.0; z < 10.0; z = z + 1){
+    y = y + z;
+}
+print(x);
 print(y);
+print(0);
