@@ -41,7 +41,8 @@ public:
             while (position < input.size() && (isalnum(input[position]) || input[position] == '_')) {
                 identifier += input[position++];
             }
-            if (identifier == "double" || identifier == "if" || identifier == "else" || identifier == "print") {
+            if (identifier == "double" || identifier == "if" || identifier == "else" || 
+                identifier == "while" || identifier == "print") {
                 return {TokenType::Keyword, identifier};
             }
             return {TokenType::Identifier, identifier};
@@ -55,8 +56,8 @@ public:
             return {TokenType::Number, number};
         }
 
-        if (current == '+' || current == '-' || current == '*' || current == '/' || current == '=' ||
-            current == '<' || current == '>') {
+        if (current == '+' || current == '-' || current == '*' || current == '/' || 
+            current == '=' || current == '<' || current == '>') {
             position++;
             return {TokenType::Operator, string(1, current)};
         }
@@ -116,6 +117,7 @@ struct BinaryOpNode : ASTNode {
             case '/': return leftValue / rightValue;
             case '<': return leftValue < rightValue;
             case '>': return leftValue > rightValue;
+            case '=': return leftValue == rightValue; // Equal operator for conditional check in 'while'
             default: throw runtime_error("Unknown operator: " + string(1, op));
         }
     }
@@ -130,6 +132,7 @@ public:
         auto left = parsePrimary();
         while (position < tokens.size() && tokens[position].type == TokenType::Operator) {
             char op = tokens[position].value[0];
+            if (op == '=') break;  // Skip assignment in conditional expressions
             position++;
             auto right = parsePrimary();
             left = make_shared<BinaryOpNode>(op, left, right);
@@ -175,6 +178,19 @@ public:
                     position++; // Skip '{'
                     parseStatement();
                 }
+            } else if (token.type == TokenType::Keyword && token.value == "while") {
+                position++; // Skip '('
+                auto condition = parseExpression();
+                position++; // Skip ')'
+                position++; // Skip '{'
+
+                // Execute the while loop
+                while (condition->evaluate()) {
+                    parseStatement();  // Execute the statement in the loop
+                    condition = parseExpression(); // Re-evaluate the loop condition
+                }
+
+                skipBlock(); // Skip the closing brace '}'
             } else if (token.type == TokenType::Keyword && token.value == "print") {
                 position++; // Skip '('
                 auto expr = parseExpression();
@@ -234,18 +250,5 @@ int main() {
     return 0;
 }
 
-// Compile:
-
 // g++ -o compiler compiler.cpp
 // ./compiler
-
-// input.txt
-// double x = 10.5;
-// double y = x + ((6 * 6) / 5);
-// if (y > 0) {
-//     y = y / 2.0;
-// } 
-// else {
-//     y = 0.0;
-// }
-// print(y);
